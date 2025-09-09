@@ -1,3 +1,32 @@
+// import { initializeApp } from "firebase/app";
+// import { getAuth, onAuthStateChanged, signInAnonymously } from "firebase/auth";
+// import { getDatabase, ref, set, onDisconnect, remove, update, onValue, onChildAdded, onChildRemoved } from "firebase/database";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js"
+import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js"
+import { getDatabase, ref, set, onDisconnect, remove, update, onValue, onChildAdded, onChildRemoved } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js"
+
+import { KeyPressListener } from "./KeyPressListener.js"
+
+// Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyChOnH49wZ-M8t0jryC7lEzls0YZ5fBbbA",
+  authDomain: "multiplayer-demo-f4f4a.firebaseapp.com",
+  databaseURL: "https://multiplayer-demo-f4f4a-default-rtdb.firebaseio.com",
+  projectId: "multiplayer-demo-f4f4a",
+  storageBucket: "multiplayer-demo-f4f4a.firebasestorage.app",
+  messagingSenderId: "428236876036",
+  appId: "1:428236876036:web:c4064dbd676c41ead14851"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+
+
+
+
 const mapData = {
   minX: 1,
   maxX: 14,
@@ -128,8 +157,8 @@ function getRandomSafeSpot() {
 
   function placeCoin() {
     const { x, y } = getRandomSafeSpot();
-    const coinRef = firebase.database().ref(`coins/${getKeyString(x, y)}`);
-    coinRef.set({
+    const coinRef = ref(getDatabase(), `coins/${getKeyString(x, y)}`);
+    set(coinRef, {
       x,
       y,
     })
@@ -144,8 +173,8 @@ function getRandomSafeSpot() {
     const key = getKeyString(x, y);
     if (coins[key]) {
       // Remove this key from data, then uptick Player's coin count
-      firebase.database().ref(`coins/${key}`).remove();
-      playerRef.update({
+      remove(ref(getDatabase(), `coins/${key}`));
+      update(playerRef, {
         coins: players[playerId].coins + 1,
       })
     }
@@ -165,7 +194,7 @@ function getRandomSafeSpot() {
       if (xChange === -1) {
         players[playerId].direction = "left";
       }
-      playerRef.set(players[playerId]);
+      set(playerRef, players[playerId]);
       attemptGrabCoin(newX, newY);
     }
   }
@@ -177,10 +206,10 @@ function getRandomSafeSpot() {
     new KeyPressListener("ArrowLeft", () => handleArrowPress(-1, 0))
     new KeyPressListener("ArrowRight", () => handleArrowPress(1, 0))
 
-    const allPlayersRef = firebase.database().ref(`players`);
-    const allCoinsRef = firebase.database().ref(`coins`);
+    const allPlayersRef = ref(getDatabase(), `players`);
+    const allCoinsRef = ref(getDatabase(), `coins`);
 
-    allPlayersRef.on("value", (snapshot) => {
+    onValue(allPlayersRef, (snapshot) => {
       //Fires whenever a change occurs
       players = snapshot.val() || {};
       Object.keys(players).forEach((key) => {
@@ -196,7 +225,7 @@ function getRandomSafeSpot() {
         el.style.transform = `translate3d(${left}, ${top}, 0)`;
       })
     })
-    allPlayersRef.on("child_added", (snapshot) => {
+    onChildAdded(allPlayersRef, (snapshot) => {
       //Fires whenever a new node is added the tree
       const addedPlayer = snapshot.val();
       const characterElement = document.createElement("div");
@@ -228,7 +257,7 @@ function getRandomSafeSpot() {
 
 
     //Remove character DOM element after they leave
-    allPlayersRef.on("child_removed", (snapshot) => {
+    onChildRemoved(allPlayersRef, (snapshot) => {
       const removedKey = snapshot.val().id;
       gameContainer.removeChild(playerElements[removedKey]);
       delete playerElements[removedKey];
@@ -237,12 +266,12 @@ function getRandomSafeSpot() {
 
     //New - not in the video!
     //This block will remove coins from local state when Firebase `coins` value updates
-    allCoinsRef.on("value", (snapshot) => {
+    onValue(allCoinsRef, (snapshot) => {
       coins = snapshot.val() || {};
     });
     //
 
-    allCoinsRef.on("child_added", (snapshot) => {
+    onChildAdded(allCoinsRef, (snapshot) => {
       const coin = snapshot.val();
       const key = getKeyString(coin.x, coin.y);
       coins[key] = true;
@@ -264,7 +293,7 @@ function getRandomSafeSpot() {
       coinElements[key] = coinElement;
       gameContainer.appendChild(coinElement);
     })
-    allCoinsRef.on("child_removed", (snapshot) => {
+    onChildRemoved(allCoinsRef, (snapshot) => {
       const {x,y} = snapshot.val();
       const keyToRemove = getKeyString(x,y);
       gameContainer.removeChild( coinElements[keyToRemove] );
@@ -276,7 +305,7 @@ function getRandomSafeSpot() {
     playerNameInput.addEventListener("change", (e) => {
       const newName = e.target.value || createName();
       playerNameInput.value = newName;
-      playerRef.update({
+      update(playerRef, {
         name: newName
       })
     })
@@ -285,7 +314,7 @@ function getRandomSafeSpot() {
     playerColorButton.addEventListener("click", () => {
       const mySkinIndex = playerColors.indexOf(players[playerId].color);
       const nextColor = playerColors[mySkinIndex + 1] || playerColors[0];
-      playerRef.update({
+      update(playerRef, {
         color: nextColor
       })
     })
@@ -295,12 +324,12 @@ function getRandomSafeSpot() {
 
   }
 
-  firebase.auth().onAuthStateChanged((user) => {
-    console.log(user)
+  const auth = getAuth(app);
+  onAuthStateChanged(auth, (user) => {
     if (user) {
       //You're logged in!
       playerId = user.uid;
-      playerRef = firebase.database().ref(`players/${playerId}`);
+      playerRef = ref(getDatabase(), `players/${playerId}`);
 
       const name = createName();
       playerNameInput.value = name;
@@ -308,18 +337,18 @@ function getRandomSafeSpot() {
       const {x, y} = getRandomSafeSpot();
 
 
-      playerRef.set({
+      set(playerRef, {
         id: playerId,
-        name,
+        name: name,
         direction: "right",
         color: randomFromArray(playerColors),
-        x,
-        y,
+        x: x,
+        y: y,
         coins: 0,
       })
 
-      //Remove me from Firebase when I diconnect
-      playerRef.onDisconnect().remove();
+      //Remove me from Firebase when I disconnect
+      onDisconnect(playerRef).remove();
 
       //Begin the game now that we are signed in
       initGame();
@@ -328,12 +357,16 @@ function getRandomSafeSpot() {
     }
   })
 
-  firebase.auth().signInAnonymously().catch((error) => {
-    var errorCode = error.code;
-    var errorMessage = error.message;
-    // ...
-    console.log(errorCode, errorMessage);
-  });
+  signInAnonymously(auth)
+    .then(() => {
+      // Signed in..
+    })
+    .catch((error) => {
+      var errorCode = error.code;
+      var errorMessage = error.message;
+      // ...
+      console.log(errorCode, errorMessage);
+    });
 
 
 })();

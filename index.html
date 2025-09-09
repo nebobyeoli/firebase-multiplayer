@@ -1,4 +1,5 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
   <head>
     <title>Multiplayer Demo</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,26 +20,7 @@
         <button id="player-color">Change Color</button>
       </div>
     </div>
-
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script>
-      // NOTE - INCLUDE YOUR FIREBASE CONFIG HERE FOR ANYTHING TO WORK:
-      const firebaseConfig = {
-        apiKey: "AIzaSyChOnH49wZ-M8t0jryC7lEzls0YZ5fBbbA",
-        authDomain: "multiplayer-demo-f4f4a.firebaseapp.com",
-        databaseURL: "https://multiplayer-demo-f4f4a-default-rtdb.firebaseio.com",
-        projectId: "multiplayer-demo-f4f4a",
-        storageBucket: "multiplayer-demo-f4f4a.firebasestorage.app",
-        messagingSenderId: "428236876036",
-        appId: "1:428236876036:web:c4064dbd676c41ead14851"
-      };
-      firebase.initializeApp(firebaseConfig);
-    </script>
-
-
-    <script src="./KeyPressListener.js"></script>
-    <script src="./app.js"></script>
+    
+    <script type="module" src="./app.js"></script>
   </body>
 </html>
